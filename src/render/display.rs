@@ -18,7 +18,7 @@ impl Display {
         gl_attr.set_context_version(4, 5);
 
         let window = video_subsystem
-            .window("minesweeper-os", 1280, 720)
+            .window(title, width, height)
             .resizable()
             .opengl()
             .build()

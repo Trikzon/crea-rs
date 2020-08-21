@@ -50,12 +50,14 @@ impl Resources {
     }
 
     fn res_name_to_path(&self, location: &str) -> PathBuf {
-        let mut path: PathBuf = self.root_path.into();
+        let root_path = &self.root_path;
+        let mut path: PathBuf = root_path.into();
 
         for part in location.split("/") {
             path = path.join(part)
         }
 
+        println!("{:?}", path);
         path
     }
 }

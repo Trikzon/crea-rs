@@ -60,7 +60,7 @@ impl Display {
         false
     }
 
-    pub fn gl(&self) -> &gl::Gl {
+    pub fn gl(&self) -> &gl::GL {
         &self.gl
     }
 }

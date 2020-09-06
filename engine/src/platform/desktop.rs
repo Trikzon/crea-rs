@@ -1,3 +1,5 @@
+#![cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]
+
 pub struct Platform {
     test_callback: fn(f32),
 }

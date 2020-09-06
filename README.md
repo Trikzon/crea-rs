@@ -37,3 +37,6 @@ found that you must start the program in the platform's language. (Android=Java/
 So, this is the simplest way I could think up to get this all working.
 
 If you know of a simpler way this could be done, please submit an issue, and we can discuss it.
+
+## How do I use it?
+just don't yet... it's practically just a main function at this point

@@ -1,1 +1,8 @@
 /target
+.idea
+Cargo.lock
+
+desktop/target
+
+engine/target
+engine/Cargo.lock

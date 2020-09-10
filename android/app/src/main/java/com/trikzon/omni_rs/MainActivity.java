@@ -14,7 +14,8 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("engine");
     }
 
-    public static native long appInit(OpenGLRenderer callbackOwner);
+    public static native long engineInit(OpenGLRenderer callbackOwner);
+    public static native long appInit(long enginePtr);
     public static native void appUpdate(long appPtr);
 
     private OpenGLView openGLView;

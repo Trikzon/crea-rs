@@ -1,8 +1,8 @@
 #![cfg(target_os = "android")]
 #![allow(non_snake_case)]
 
-use jni::objects::GlobalRef;
-use jni::sys::jfloat;
+use jni::objects::{JClass, JObject, GlobalRef};
+use jni::sys::{jlong, jfloat};
 use jni::JNIEnv;
 
 pub struct Platform<'a> {
@@ -25,4 +25,18 @@ impl<'a> Platform<'a> {
             &[foo.into()]
         ).unwrap();
     }
+}
+
+#[no_mangle]
+pub unsafe extern "system" fn Java_com_trikzon_omni_1rs_MainActivity_engineInit(
+    env: JNIEnv,
+    _class: JClass,
+    callback: JObject
+) -> jlong {
+    let global_ref = env.new_global_ref(callback).unwrap();
+
+    let platform = Platform::init(env, global_ref);
+    let engine = crate::Engine::init(platform);
+
+    Box::into_raw(Box::new(engine)) as jlong
 }

@@ -12,7 +12,8 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-        appPtr = MainActivity.appInit(this);
+        long enginePtr = MainActivity.engineInit(this);
+        appPtr = MainActivity.appInit(enginePtr);
     }
 
     @Override
@@ -28,7 +29,15 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         MainActivity.appUpdate(appPtr);
     }
 
+    private float maxNum = 0;
+
     private void testCallback(float foo) {
-        System.out.println(foo);;
+        if (foo >= maxNum) {
+            maxNum = foo;
+            System.out.println(foo);
+        } else {
+            System.err.println("New foo: " + foo + "; maxNum: " + maxNum);
+            System.exit(-1);
+        }
     }
 }

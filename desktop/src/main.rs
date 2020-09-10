@@ -2,9 +2,8 @@ extern crate app;
 extern crate engine;
 
 fn main() {
-    let platform = engine::platform::Platform::init(test_callback);
-    let engine = engine::Engine::init(platform);
-    let mut app = app::App::init(engine);
+    let engine = engine::platform::engine_init(test_callback);
+    let mut app = app::platform::app_init(&engine);
 
     loop {
         app.update();

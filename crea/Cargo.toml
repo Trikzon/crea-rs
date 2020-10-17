@@ -1,0 +1,13 @@
+[package]
+name = "crea"
+version = "0.1.0"
+authors = ["Trikzon <trikzondev@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
+gl = { path = "lib/gl" }
+
+[features]
+gl_debug = ["gl/debug"]
+

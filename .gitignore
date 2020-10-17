@@ -1,8 +1,9 @@
-/target
 .idea
-Cargo.lock
 
-desktop/target
+crea/target
+crea/Cargo.lock
+crea/lib/gl/target
+crea/lib/gl/Cargo.lock
 
-engine/target
-engine/Cargo.lock
+game/target
+game/Cargo.lock

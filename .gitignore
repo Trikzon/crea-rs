@@ -1,9 +1,3 @@
 .idea
-
-crea/target
-crea/Cargo.lock
-crea/lib/gl/target
-crea/lib/gl/Cargo.lock
-
-game/target
-game/Cargo.lock
+target
+Cargo.lock

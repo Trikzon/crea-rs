@@ -1,6 +1,6 @@
-extern crate crea;
+extern crate crean;
 
-use crea::window;
+use crean::window;
 
 fn main() {
     let mut window = window::Window::new("Title", 1280, 720);

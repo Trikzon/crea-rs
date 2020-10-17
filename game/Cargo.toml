@@ -5,4 +5,4 @@ authors = ["Trikzon <trikzondev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-crea = { path = "../crea" }
+crean = { path = "../crean" }

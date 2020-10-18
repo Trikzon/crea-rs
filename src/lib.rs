@@ -1,5 +1,5 @@
-extern crate sdl2;
 extern crate gl;
+extern crate glfw;
 
 mod window;
-pub use window::*;
+pub use window::Window;

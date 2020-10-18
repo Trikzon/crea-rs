@@ -1,13 +1,29 @@
 extern crate crean;
 
-fn main() {
-    let mut window = crean::Window::new(1280, 720, "Crean Engine");
+struct Game {
+    counter: u64,
+}
 
-    loop {
-        if window.should_close() {
-            break;
-        }
-
-        window.update();
+impl crean::App for Game {
+    fn init(&mut self) {
+        println!("init");
     }
+
+    fn input(&mut self) {
+        println!("input");
+
+    }
+
+    fn update(&mut self) {
+        self.counter += 1;
+        println!("update");
+    }
+
+    fn render(&mut self) {
+        println!("render: {}", self.counter);
+    }
+}
+
+fn main() {
+    crean::run(1280, 720, "Crean Engine", &mut Game { counter: 0 });
 }

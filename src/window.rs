@@ -9,12 +9,11 @@ pub struct Window {
     // gl and glfw variables
     glfw: Glfw,
     window: glfw::Window,
-    events: Receiver<(f64, WindowEvent)>,
     gl: gl::Gl,
 }
 
 impl Window {
-    pub fn new(width: u32, height: u32, title: &str) -> Self {
+    pub fn new(width: u32, height: u32, title: &str) -> (Self, Receiver<(f64, WindowEvent)>) {
         let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS)
             .expect("Failed to initialize GLFW");
 
@@ -46,36 +45,20 @@ impl Window {
             gl.ClearColor(1.0, 0.0, 0.0, 1.0);
         }
 
-        Window {
+        (Window {
             width, height, title,
-            window, glfw, events, gl,
-        }
+            window, glfw, gl,
+        }, events)
     }
 
     pub fn update(&mut self) {
         self.window.swap_buffers();
 
         self.glfw.poll_events();
-        if self.process_events() {
-            self.close();
-        }
 
         unsafe {
             self.gl.Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
-    }
-
-    fn process_events(&mut self) -> bool {
-        use glfw::{Key, Action};
-        for (_, event) in glfw::flush_messages(&self.events) {
-            match event {
-                WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                    return true;
-                },
-                _ => {}
-            }
-        }
-        false
     }
 
     pub fn should_close(&self) -> bool {

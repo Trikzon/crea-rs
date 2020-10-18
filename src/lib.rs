@@ -17,6 +17,9 @@ pub fn run(width: u32, height: u32, title: &str, app: &mut impl App) {
                 WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                     window.close();
                 },
+                WindowEvent::FramebufferSize(width, height) => {
+                    window.resize(width, height);
+                },
                 _ => {}
             }
         }

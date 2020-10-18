@@ -40,15 +40,12 @@ impl Window {
         let width = width as i32;
         let height = height as i32;
         let title = title.to_string();
-        unsafe {
-            gl.Viewport(0, 0, width, height);
-            gl.ClearColor(1.0, 0.0, 0.0, 1.0);
-        }
 
-        (Window {
-            width, height, title,
-            window, glfw, gl,
-        }, events)
+        let window = Window { width, height, title, glfw, window, gl, };
+        window.resize(width, height);
+        window.set_clear_color(1.0, 0.0, 0.0);
+
+        (window, events)
     }
 
     pub fn update(&mut self) {
@@ -67,5 +64,17 @@ impl Window {
 
     pub fn close(&mut self) {
         self.window.set_should_close(true);
+    }
+
+    pub fn resize(&self, width: i32, height: i32) {
+        unsafe {
+            self.gl.Viewport(0, 0, width, height);
+        }
+    }
+
+    pub fn set_clear_color(&self, red: f32, green: f32, blue: f32) {
+        unsafe {
+            self.gl.ClearColor(red, green, blue, 1.0);
+        }
     }
 }

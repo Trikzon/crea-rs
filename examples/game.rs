@@ -21,7 +21,7 @@ impl crean::App for Game {
         }
     }
 
-    fn update(&mut self, crean: &mut Crean) {
+    fn update(&mut self, crean: &mut Crean, dt: f64) {
         self.counter += 1;
     }
 

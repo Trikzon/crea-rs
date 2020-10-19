@@ -10,10 +10,13 @@ pub struct Window {
     glfw: Glfw,
     window: glfw::Window,
     gl: gl::Gl,
+
+    // used for fps and delta time calculation
+    last_time: f64,
 }
 
 impl Window {
-    pub fn new(width: u32, height: u32, title: &str) -> (Self, Receiver<(f64, WindowEvent)>) {
+    pub(crate) fn new(width: u32, height: u32, title: &str) -> (Self, Receiver<(f64, WindowEvent)>) {
         let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS)
             .expect("Failed to initialize GLFW");
 
@@ -40,15 +43,16 @@ impl Window {
         let width = width as i32;
         let height = height as i32;
         let title = title.to_string();
+        let last_time = glfw.get_time();
 
-        let window = Window { width, height, title, glfw, window, gl, };
+        let window = Window { width, height, title, glfw, window, gl, last_time };
         window.resize(width, height);
         window.set_clear_color(1.0, 0.0, 0.0);
 
         (window, events)
     }
 
-    pub fn update(&mut self) {
+    pub(crate) fn update(&mut self) {
         self.window.swap_buffers();
 
         self.glfw.poll_events();
@@ -76,5 +80,13 @@ impl Window {
         unsafe {
             self.gl.ClearColor(red, green, blue, 1.0);
         }
+    }
+
+    pub fn get_delta_time(&mut self) -> f64 {
+        let time = self.glfw.get_time();
+        let dt = time - self.last_time;
+        self.last_time = time;
+
+        dt
     }
 }

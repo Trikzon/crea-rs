@@ -52,8 +52,10 @@ pub fn run(width: u32, height: u32, title: &str, app: &mut impl App) {
                 _ => {}
             }
         }
+        let dt = crean.window.get_delta_time();
+
         app.input(&mut crean);
-        app.update(&mut crean);
+        app.update(&mut crean, dt);
         app.render(&mut crean);
 
         crean.input.end_frame();
@@ -63,6 +65,6 @@ pub fn run(width: u32, height: u32, title: &str, app: &mut impl App) {
 pub trait App {
     fn init(&mut self, crean: &mut Crean);
     fn input(&mut self, crean: &mut Crean);
-    fn update(&mut self, crean: &mut Crean);
+    fn update(&mut self, crean: &mut Crean, dt: f64);
     fn render(&mut self, crean: &mut Crean);
 }

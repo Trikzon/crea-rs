@@ -2,36 +2,67 @@ extern crate gl;
 extern crate glfw;
 
 mod window;
+mod input;
+
+pub use glfw::Key;
+pub use glfw::MouseButton;
+pub use input::Input;
+pub use window::Window;
+
+pub struct Crean {
+    window: window::Window,
+    input: input::Input,
+}
+
+impl Crean {
+    pub fn window(&mut self) -> &mut window::Window {
+        &mut self.window
+    }
+
+    pub fn input(&mut self) -> &mut input::Input {
+        &mut self.input
+    }
+}
 
 pub fn run(width: u32, height: u32, title: &str, app: &mut impl App) {
-    let (mut window, events) = window::Window::new(width, height, title);
+    let (window, events) = window::Window::new(width, height, title);
+    let input = input::Input::new();
+    let mut crean = Crean { window, input };
 
-    app.init();
+    app.init(&mut crean);
 
-    while !window.should_close() {
-        window.update();
+    while !crean.window().should_close() {
+        crean.window().update();
 
-        use glfw::{Action, Key, WindowEvent};
+        use glfw::WindowEvent;
         for (_, event) in glfw::flush_messages(&events) {
             match event {
-                WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                    window.close();
-                },
                 WindowEvent::FramebufferSize(width, height) => {
-                    window.resize(width, height);
+                    crean.window().resize(width, height);
+                },
+                WindowEvent::CursorPos(x, y) => {
+                    crean.input.cursor_pos_event(x, y);
+                },
+                WindowEvent::MouseButton(button, action, modifiers) => {
+                    crean.input.mouse_button_event(button, action, modifiers);
+                },
+                WindowEvent::Key(key, _scan_code, action, modifiers) => {
+                    crean.input.key_event(key, action, modifiers);
                 },
                 _ => {}
             }
         }
-        app.input();
-        app.update();
-        app.render();
+        app.input(&mut crean);
+        app.update(&mut crean);
+        app.render(&mut crean);
+
+        crean.input.end_frame();
     }
 }
 
 pub trait App {
-    fn init(&mut self);
-    fn input(&mut self);
-    fn update(&mut self);
-    fn render(&mut self);
+    fn init(&mut self, crean: &mut Crean);
+    fn input(&mut self, crean: &mut Crean);
+    fn update(&mut self, crean: &mut Crean);
+    fn render(&mut self, crean: &mut Crean);
 }

@@ -47,7 +47,7 @@ impl Window {
 
         let window = Window { width, height, title, glfw, window, gl, last_time };
         window.resize(width, height);
-        window.set_clear_color(1.0, 0.0, 0.0);
+        window.set_clear_color(0.0, 0.0, 0.0);
 
         (window, events)
     }
@@ -88,5 +88,9 @@ impl Window {
         self.last_time = time;
 
         dt
+    }
+
+    pub fn gl(&self) -> &gl::Gl {
+        &self.gl
     }
 }

@@ -154,8 +154,7 @@ impl crean::App for Game {
         }
     }
 
-    fn update(&mut self, _crean: &mut Crean, dt: f64) {
-        println!("dt: {}", dt);
+    fn update(&mut self, _crean: &mut Crean, _dt: f64) {
     }
 
     fn render(&mut self, crean: &mut Crean) {

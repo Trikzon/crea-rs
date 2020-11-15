@@ -1,5 +1,8 @@
 mod bindings {
+    #[cfg(not(feature = "debug"))]
     include!("./bindings.rs");
+    #[cfg(feature = "debug")]
+    include!("./debug_bindings.rs");
 }
 
 pub use bindings::*;

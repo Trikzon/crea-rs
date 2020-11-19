@@ -4,7 +4,7 @@ use gl_generator::{
     Registry, Fallbacks, StructGenerator,
     DebugStructGenerator, Api, Profile,
 };
-use std::{env, fs::File};
+use std::fs::File;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");

@@ -3,11 +3,13 @@ extern crate glfw;
 
 mod window;
 mod input;
+mod shader;
 
 pub use glfw::Key;
 pub use glfw::MouseButton;
 pub use input::Input;
 pub use window::Window;
+pub use shader::Shader;
 
 pub struct Crean {
     window: window::Window,

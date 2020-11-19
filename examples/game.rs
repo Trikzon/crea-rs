@@ -2,31 +2,9 @@ extern crate crean;
 extern crate gl;
 
 use crean::Crean;
-use std::ffi::CString;
-use std::{str, ptr, mem};
+use std::{ptr, mem};
 use std::os::raw::c_void;
 use gl::types::*;
-
-const VERT_SHADER_SOURCE: &str = "
-    #version 330 core
-    layout (location=0) in vec3 aPos;
-    layout (location=1) in vec4 aColor;
-    out vec4 fColor;
-    void main() {
-        fColor = aColor;
-        gl_Position = vec4(aPos, 1.0);
-    }";
-
-const FRAG_SHADER_SOURCE: &str = "
-    #version 330 core
-
-    in vec4 fColor;
-
-    out vec4 color;
-
-    void main() {
-        color = fColor;
-    }";
 
 const VERTEX_ARRAY: [f32; 28] = [
     // position      // color
@@ -43,9 +21,7 @@ const ELEMENT_ARRAY: [u32; 6] = [
 ];
 
 struct Game {
-    vert_id: u32,
-    frag_id: u32,
-    program_id: u32,
+    shader: Option<crean::Shader>,
     vao_id: u32,
     vbo_id: u32,
     ebo_id: u32,
@@ -53,58 +29,11 @@ struct Game {
 
 impl crean::App for Game {
     fn init(&mut self, crean: &mut Crean) {
-        // Compile and link shaders
+        self.shader = Some(crean::Shader::new(
+            "./assets/shaders/default.glsl", crean.window().gl()
+        ));
 
         unsafe {
-            // Frist load and compile the vert shader
-            self.vert_id = crean.window().gl().CreateShader(gl::VERTEX_SHADER);
-            // Pass the shader source to the GPU
-            let c_str_vert = CString::new(VERT_SHADER_SOURCE.as_bytes()).unwrap();
-            crean.window().gl().ShaderSource(self.vert_id, 1, &c_str_vert.as_ptr(), ptr::null());
-            crean.window().gl().CompileShader(self.vert_id);
-
-            // Check for errors in compilation
-            let mut success = gl::FALSE as GLint;
-            let mut info_log = Vec::with_capacity(512);
-            info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
-            crean.window().gl().GetShaderiv(self.vert_id, gl::COMPILE_STATUS, &mut success);
-            if success != gl::TRUE as GLint {
-                crean.window().gl().GetShaderInfoLog(self.vert_id, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-                println!("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-            }
-
-            // Second load and compile the frag shader
-            self.frag_id = crean.window().gl().CreateShader(gl::FRAGMENT_SHADER);
-            // Pass the shader source to the GPU
-            let c_str_vert = CString::new(FRAG_SHADER_SOURCE.as_bytes()).unwrap();
-            crean.window().gl().ShaderSource(self.frag_id, 1, &c_str_vert.as_ptr(), ptr::null());
-            crean.window().gl().CompileShader(self.frag_id);
-
-            // Check for errors in compilation
-            let mut success = gl::FALSE as GLint;
-            let mut info_log = Vec::with_capacity(512);
-            info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
-            crean.window().gl().GetShaderiv(self.frag_id, gl::COMPILE_STATUS, &mut success);
-            if success != gl::TRUE as GLint {
-                crean.window().gl().GetShaderInfoLog(self.frag_id, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-                println!("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-            }
-
-            // Link shaders and check for errors
-            self.program_id = crean.window().gl().CreateProgram();
-            crean.window().gl().AttachShader(self.program_id, self.vert_id);
-            crean.window().gl().AttachShader(self.program_id, self.frag_id);
-            crean.window().gl().LinkProgram(self.program_id);
-
-            let mut success = gl::FALSE as GLint;
-            let mut info_log = Vec::with_capacity(512);
-            info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
-            crean.window().gl().GetProgramiv(self.program_id, gl::LINK_STATUS, &mut success);
-            if success != gl::TRUE as GLint {
-                crean.window().gl().GetProgramInfoLog(self.program_id, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-                println!("ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-            }
-
             // Generate VAO, VBO, and EBO buffer objects, and send to GPU
             crean.window().gl().GenVertexArrays(1, &mut self.vao_id);
             crean.window().gl().BindVertexArray(self.vao_id);
@@ -158,9 +87,11 @@ impl crean::App for Game {
     }
 
     fn render(&mut self, crean: &mut Crean) {
+        if let Some(shader) = &self.shader {
+            shader.enable();
+        }
         unsafe {
             // Bind shader program
-            crean.window().gl().UseProgram(self.program_id);
             crean.window().gl().BindVertexArray(self.vao_id);
 
             // Enable the vert attribute pointers
@@ -182,9 +113,7 @@ impl crean::App for Game {
 
 fn main() {
     crean::run(1280, 720, "Crean Engine", &mut Game {
-        vert_id: 0,
-        frag_id: 0,
-        program_id: 0,
+        shader: None,
         vao_id: 0,
         vbo_id: 0,
         ebo_id: 0,

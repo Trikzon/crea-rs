@@ -2,6 +2,18 @@ use std::io::Read;
 use std::ffi::CString;
 use std::{ptr, str};
 use gl::types::*;
+use std::str::Utf8Error;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum ShaderError {
+    #[error("compilation error in shader.\n{0}")]
+    Compile(String),
+    #[error("link error in shader.\n{0}")]
+    Link(String),
+    #[error(transparent)]
+    Utf8(#[from] Utf8Error),
+}
 
 pub struct Shader {
     program_id: u32,
@@ -9,7 +21,7 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(file_path: &str, gl: &gl::Gl) -> Self {
+    pub fn new(gl: &gl::Gl, file_path: &str) -> Result<Self, ShaderError> {
         // TODO: Move out to resource manager.
         let mut file = std::fs::File::open(file_path).expect("Unable to open file");
         let mut source = String::new();
@@ -17,38 +29,22 @@ impl Shader {
 
         let mut shader_ids = Vec::new();
         for shader_type in ShaderType::split_source(&source) {
-            shader_ids.push(shader_type.compile(gl));
+            shader_ids.push(shader_type.compile(gl)?);
         };
+        let program_id = Self::compile(gl, shader_ids)?;
 
-        let program_id = Self::compile(shader_ids, gl);
-
-        Shader { program_id, gl: gl.clone()}
+        Ok(Shader { program_id, gl: gl.clone() })
     }
 
-    fn compile(shader_ids: Vec<u32>, gl: &gl::Gl) -> u32 {
+    fn compile(gl: &gl::Gl, shader_ids: Vec<u32>) -> Result<u32, ShaderError> {
         let program_id = unsafe { gl.CreateProgram() };
         for shader_id in &shader_ids {
             unsafe { gl.AttachShader(program_id, *shader_id); }
         }
         unsafe { gl.LinkProgram(program_id) }
+        check_shader_status(gl, program_id, 512, true)?;
 
-        let mut success = gl::FALSE as GLint;
-        let mut info_log = Vec::with_capacity(512);
-        unsafe {
-            info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
-            gl.GetProgramiv(program_id, gl::LINK_STATUS, &mut success);
-            if success != gl::TRUE as GLint {
-                gl.GetProgramInfoLog(program_id, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-                println!("ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-            }
-        }
-        for shader_id in shader_ids {
-            unsafe {
-                gl.DetachShader(program_id, shader_id);
-                gl.DeleteShader(shader_id);
-            }
-        }
-        program_id
+        Ok(program_id)
     }
 
     pub fn enable(&self) {
@@ -100,11 +96,13 @@ impl ShaderType {
         }
     }
 
-    fn compile(&self, gl: &gl::Gl) -> u32 {
+    fn compile(&self, gl: &gl::Gl) -> Result<u32, ShaderError> {
         let (source, gl_type) = match self {
             Self::VERTEX(s) => (s, gl::VERTEX_SHADER),
             Self::FRAGMENT(s) => (s, gl::FRAGMENT_SHADER),
         };
+
+        // ERROR
         let id = unsafe { gl.CreateShader(gl_type) };
         let c_str_source = CString::new(source.as_bytes()).expect("Couldn't create CString.");
 
@@ -112,17 +110,43 @@ impl ShaderType {
             gl.ShaderSource(id, 1, &c_str_source.as_ptr(), ptr::null());
             gl.CompileShader(id);
         }
+        check_shader_status(gl, id, 512, false)?;
 
-        let mut success = gl::FALSE as GLint;
-        let mut info_log = Vec::with_capacity(512);
-        unsafe {
-            info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
-            gl.GetShaderiv(id, gl::COMPILE_STATUS, &mut success);
-            if success != gl::TRUE as GLint {
-                gl.GetShaderInfoLog(id, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-                println!("ERROR::SHADER::TYPE::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-            }
-        }
-        id
+        Ok(id)
     }
+}
+
+fn check_shader_status(gl: &gl::Gl, id: u32, capacity: usize, shader_program: bool) -> Result<(), ShaderError> {
+    let mut success = gl::FALSE as GLint;
+    let mut info_log = Vec::with_capacity(capacity);
+    assert_ne!(capacity, 0);
+    unsafe { info_log.set_len(capacity - 1) }
+
+    if shader_program {
+        unsafe { gl.GetProgramiv(id, gl::LINK_STATUS, &mut success); }
+    } else {
+        unsafe { gl.GetShaderiv(id, gl::COMPILE_STATUS, &mut success); }
+    }
+
+    // TODO: Check for length of message. Currently we are getting garbage after the message.
+    if success != gl::TRUE as GLint {
+        if shader_program {
+            unsafe {
+                gl.GetProgramInfoLog(
+                    id, capacity as i32, ptr::null_mut(),
+                    info_log.as_mut_ptr() as *mut GLchar,
+                );
+            }
+            return Err(ShaderError::Link(str::from_utf8(&info_log)?.to_owned()));
+        } else {
+            unsafe {
+                gl.GetShaderInfoLog(
+                    id, capacity as i32, ptr::null_mut(),
+                    info_log.as_mut_ptr() as *mut GLchar,
+                );
+            }
+            return Err(ShaderError::Compile(str::from_utf8(&info_log)?.to_owned()));
+        }
+    }
+    return Ok(());
 }

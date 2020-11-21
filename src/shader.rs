@@ -52,6 +52,12 @@ impl Shader {
     }
 }
 
+impl Drop for Shader {
+    fn drop(&mut self) {
+        unsafe { self.gl.DeleteProgram(self.program_id); }
+    }
+}
+
 #[derive(Debug)]
 enum ShaderType {
     FRAGMENT(String),

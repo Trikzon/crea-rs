@@ -2,9 +2,9 @@ use glfw::{Context, Glfw, WindowEvent};
 use std::sync::mpsc::Receiver;
 
 pub struct Window {
-    width: i32,
-    height: i32,
-    title: String,
+    _width: i32,
+    _height: i32,
+    _title: String,
 
     // gl and glfw variables
     glfw: Glfw,
@@ -45,7 +45,15 @@ impl Window {
         let title = title.to_string();
         let last_time = glfw.get_time();
 
-        let window = Window { width, height, title, glfw, window, gl, last_time };
+        let window = Window {
+            _width: width,
+            _height: height,
+            _title: title,
+            glfw,
+            window,
+            gl,
+            last_time
+        };
         window.resize(width, height);
         window.set_clear_color(0.0, 0.0, 0.0);
 

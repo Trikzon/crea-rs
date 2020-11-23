@@ -1,5 +1,6 @@
 use glfw::{Action, Key, Modifiers, MouseButton};
 
+/// Provides an interface to mouse and keyboard input.
 pub struct Input {
     cursor_x: f64,
     cursor_y: f64,

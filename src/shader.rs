@@ -21,6 +21,9 @@ pub struct Shader {
 }
 
 impl Shader {
+    /// Takes a filepath to a glsl shader file then compiles and links the shader.
+    /// The shader file should contain a fragment shader labeled with `#type fragment` and a vertex
+    /// shader labeled with `#type vertex`.
     pub fn new(gl: &gl::Gl, file_path: &str) -> Result<Self, ShaderError> {
         // TODO: Move out to resource manager.
         let mut file = std::fs::File::open(file_path).expect("Unable to open file");

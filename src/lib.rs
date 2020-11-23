@@ -11,6 +11,8 @@ pub use input::Input;
 pub use window::Window;
 pub use shader::Shader;
 
+/// A struct to house underlying engine structs like `window::Window` and `input::Input`.
+/// This gets passed to the application's run-loop methods to give access to engine features.
 pub struct Crean {
     window: window::Window,
     input: input::Input,
@@ -26,6 +28,9 @@ impl Crean {
     }
 }
 
+/// Crean's entrypoint function. It creates the `Crean` struct and starts the app run-loop.
+/// This function only returns when the app closes so it should be called after any pre-init code
+/// has been run.
 pub fn run(width: u32, height: u32, title: &str, app: &mut impl App) {
     let (window, events) = window::Window::new(width, height, title);
     let input = input::Input::new();
@@ -64,9 +69,17 @@ pub fn run(width: u32, height: u32, title: &str, app: &mut impl App) {
     }
 }
 
+/// Implement on the main app struct. Provides methods that are called by the engine and controls
+/// the run-loop.
 pub trait App {
+    /// Called once after the engine has been initiated.
+    /// Resource loading should take place at this stage.
     fn init(&mut self, crean: &mut Crean);
+    /// Runs every tick. Input from mouse/keyboard should take place at this stage.
     fn input(&mut self, crean: &mut Crean);
+    /// Runs every tick. Physics and other update-like behavior should happen at this stage.
+    /// Provides a delta-time variable for use in physics so fps and physics aren't linked.
     fn update(&mut self, crean: &mut Crean, dt: f64);
+    /// Runs every tick. Render calls should take place at this stage.
     fn render(&mut self, crean: &mut Crean);
 }

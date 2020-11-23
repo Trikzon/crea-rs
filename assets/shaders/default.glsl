@@ -12,7 +12,7 @@ void main() {
 }
 
 #type fragment
-#version 330 cor
+#version 330 core
 
 in vec4 fColor;
 

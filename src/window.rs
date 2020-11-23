@@ -1,6 +1,7 @@
 use glfw::{Context, Glfw, WindowEvent};
 use std::sync::mpsc::Receiver;
 
+/// Holds data related to the window and interfaces with a window api to change it.
 pub struct Window {
     _width: i32,
     _height: i32,
@@ -70,32 +71,39 @@ impl Window {
         }
     }
 
-    pub fn should_close(&self) -> bool {
-        self.window.should_close()
-    }
-
-    pub fn close(&mut self) {
-        self.window.set_should_close(true);
-    }
-
-    pub fn resize(&self, width: i32, height: i32) {
-        unsafe {
-            self.gl.Viewport(0, 0, width, height);
-        }
-    }
-
-    pub fn set_clear_color(&self, red: f32, green: f32, blue: f32) {
-        unsafe {
-            self.gl.ClearColor(red, green, blue, 1.0);
-        }
-    }
-
-    pub fn get_delta_time(&mut self) -> f64 {
+    pub(crate) fn get_delta_time(&mut self) -> f64 {
         let time = self.glfw.get_time();
         let dt = time - self.last_time;
         self.last_time = time;
 
         dt
+    }
+
+    /// Returns true if the window has received a signal from the user to close.
+    /// Usually is sent using the 'x' button on a window.
+    pub fn should_close(&self) -> bool {
+        self.window.should_close()
+    }
+
+    /// Tells the window api that the window should close.
+    /// Allows for an app to implement a close/exit button instead of relying on the 'x' button.
+    pub fn close(&mut self) {
+        self.window.set_should_close(true);
+    }
+
+    /// Resizes the viewport of the window.
+    pub fn resize(&self, width: i32, height: i32) {
+        // TODO: Should resize the actual window instead of just the Viewport.
+        unsafe {
+            self.gl.Viewport(0, 0, width, height);
+        }
+    }
+
+    /// Sets the color that clears the screen each frame.
+    pub fn set_clear_color(&self, red: f32, green: f32, blue: f32) {
+        unsafe {
+            self.gl.ClearColor(red, green, blue, 1.0);
+        }
     }
 
     pub fn gl(&self) -> &gl::Gl {

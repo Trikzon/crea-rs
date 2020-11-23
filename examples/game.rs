@@ -31,7 +31,7 @@ impl crean::App for Game {
     fn init(&mut self, crean: &mut Crean) {
         self.shader = Some(crean::Shader::new(
             crean.window().gl(), "./assets/shaders/default.glsl"
-        ).expect(""));
+        ).unwrap());
 
         unsafe {
             // Generate VAO, VBO, and EBO buffer objects, and send to GPU

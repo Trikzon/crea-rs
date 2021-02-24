@@ -5,10 +5,8 @@ authors = ["Trikzon <trikzondev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-gl = { path = "lib/gl" }
-glfw = "0.40"
+glfw = "0.41"
+raw_gl = { package = "gl", version = "0.14" }
+
+bitflags = "1.2"
 thiserror = "1.0"
-
-[features]
-gl_debug = ["gl/debug"]
-

@@ -1,4 +1,4 @@
-use crate::vector::*;
+use crate::maths::{Vector2, Vector3, Vector4};
 use bitflags::bitflags;
 use raw_gl::types::*;
 

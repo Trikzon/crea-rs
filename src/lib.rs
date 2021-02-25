@@ -1,2 +1,2 @@
 pub mod graphics;
-pub mod vector;
+pub mod maths;

@@ -1,300 +1,151 @@
-pub trait SizedVector {
-    fn size() -> usize;
+// Thanks to juliand665 for allowing me to use his macro code for vectors.
+// https://github.com/juliand665/raytracer-rust/blob/master/src/vectors/vector.rs
+
+use std::fmt;
+use std::ops;
+
+pub type Component = f32;
+
+pub trait Vector:
+    'static
+    + Send
+    + Sync
+    + Sized
+    + Copy
+    + Clone
+    + PartialEq
+    + fmt::Display
+    + ops::Neg<Output = Self>
+    + ops::Add<Output = Self>
+    + ops::AddAssign
+    + ops::Sub<Output = Self>
+    + ops::SubAssign
+    + ops::Mul<Component, Output = Self>
+    + ops::MulAssign<Component>
+    + ops::Div<Component, Output = Self>
+    + ops::DivAssign<Component>
+{
+    fn zero() -> Self;
 }
 
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
-pub struct Vec3f {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
-impl From<(f32, f32, f32)> for Vec3f {
-    fn from(data: (f32, f32, f32)) -> Self {
-        Vec3f {
-            x: data.0,
-            y: data.1,
-            z: data.2,
+macro_rules! vec_type {
+    ($type:ident($($component:ident)*)) => {
+        #[derive(Debug, Copy, Clone, PartialEq)]
+        pub struct $type {
+            $(pub $component: Component),*
         }
-    }
-}
 
-impl Vec3f {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Vec3f { x, y, z }
-    }
-}
-
-impl SizedVector for Vec3f {
-    fn size() -> usize {
-        3
-    }
-}
-
-impl std::ops::Add for Vec3f {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self::Output {
-        Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
+        impl $type {
+            pub fn new($($component: Component,)*) -> Self {
+                Self { $($component),* }
+            }
         }
-    }
-}
 
-impl std::ops::AddAssign for Vec3f {
-    fn add_assign(&mut self, other: Self) {
-        self.x = self.x + other.x;
-        self.y = self.y + other.y;
-        self.z = self.z + other.z;
-    }
-}
-
-impl std::ops::Sub for Vec3f {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self::Output {
-        Self {
-            x: self.x - other.x,
-            y: self.y - other.y,
-            z: self.z - other.z,
+        impl fmt::Display for $type {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "({})", [$(self.$component.to_string()),*].join(", "))
+            }
         }
-    }
-}
 
-impl std::ops::SubAssign for Vec3f {
-    fn sub_assign(&mut self, other: Self) {
-        self.x = self.x - other.x;
-        self.y = self.y - other.y;
-        self.z = self.z - other.z;
-    }
-}
-
-impl std::ops::Mul for Vec3f {
-    type Output = Self;
-
-    fn mul(self, other: Self) -> Self::Output {
-        Self {
-            x: self.x * other.x,
-            y: self.y * other.y,
-            z: self.z * other.z,
+        impl Vector for $type {
+            fn zero() -> Self {
+                Self { $($component: 0.0),* }
+            }
         }
-    }
-}
 
-impl std::ops::MulAssign for Vec3f {
-    fn mul_assign(&mut self, other: Self) {
-        self.x = self.x * other.x;
-        self.y = self.y * other.y;
-        self.z = self.z * other.z;
-    }
-}
+        impl ops::Neg for $type {
+            type Output = Self;
 
-impl std::ops::Div for Vec3f {
-    type Output = Self;
-
-    fn div(self, other: Self) -> Self::Output {
-        Vec3f {
-            x: self.x / other.x,
-            y: self.y / other.y,
-            z: self.z / other.z,
+            fn neg(self) -> Self {
+                Self { $($component: -self.$component),* }
+            }
         }
-    }
-}
 
-impl std::ops::DivAssign for Vec3f {
-    fn div_assign(&mut self, other: Self) {
-        self.x = self.x / other.x;
-        self.y = self.y / other.y;
-        self.z = self.z / other.z;
-    }
-}
+        macro_rules! bin_op {
+            (cwise $rhs:ty, $op_name:ident, $fn:ident, $op:tt) => {
+                impl ops::$op_name<$rhs> for $type {
+                    type Output = Self;
 
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
-pub struct Vec4f {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-    pub w: f32,
-}
+                    fn $fn(self, rhs: $rhs) -> Self {
+                        Self { $($component: self.$component $op rhs.$component),* }
+                    }
+                }
+            };
 
-impl From<(f32, f32, f32, f32)> for Vec4f {
-    fn from(data: (f32, f32, f32, f32)) -> Self {
-        Vec4f {
-            x: data.0,
-            y: data.1,
-            z: data.2,
-            w: data.3,
+            (cwise, $op_name:ident, $fn:ident, $op:tt) => {
+                bin_op!(cwise Self, $op_name, $fn, $op);
+            };
+
+            (linear, $op_name:ident, $fn:ident, $op:tt) => {
+                impl ops::$op_name<Component> for $type {
+                    type Output = Self;
+
+                    fn $fn(self, rhs: Component) -> Self {
+                        Self { $($component: self.$component $op rhs),* }
+                    }
+                }
+            };
         }
-    }
-}
 
-impl SizedVector for Vec4f {
-    fn size() -> usize {
-        4
-    }
-}
+        bin_op!(cwise, Add, add, +);
+        bin_op!(cwise, Sub, sub, -);
+        bin_op!(linear, Mul, mul, *);
+        bin_op!(linear, Div, div, /);
 
-impl std::ops::Add for Vec4f {
-    type Output = Self;
+        macro_rules! bin_op_assign {
+            (cwise $rhs:ty, $op_name:ident, $fn:ident, $op:tt) => {
+                impl ops::$op_name<$rhs> for $type {
+                    fn $fn(&mut self, rhs: $rhs) {
+                    $(self.$component $op rhs.$component;)*
+                    }
+                }
+            };
 
-    fn add(self, other: Self) -> Self::Output {
-        Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
-            w: self.w + other.w,
+            (cwise, $op_name:ident, $fn:ident, $op:tt) => {
+                bin_op_assign!(cwise Self, $op_name, $fn, $op);
+            };
+
+            (linear, $op_name:ident, $fn:ident, $op:tt) => {
+                impl ops::$op_name<Component> for $type {
+                    fn $fn(&mut self, rhs: Component) {
+                        $(self.$component $op rhs;)*
+                    }
+                }
+            };
         }
-    }
+        bin_op_assign!(cwise, AddAssign, add_assign, +=);
+        bin_op_assign!(cwise, SubAssign, sub_assign, -=);
+        bin_op_assign!(linear, MulAssign, mul_assign, *=);
+        bin_op_assign!(linear, DivAssign, div_assign, /=);
+    };
 }
 
-impl std::ops::AddAssign for Vec4f {
-    fn add_assign(&mut self, other: Self) {
-        self.x += other.x;
-        self.y += other.y;
-        self.z += other.z;
-        self.w += other.w;
-    }
-}
+vec_type!(Vector2(x y));
+vec_type!(Vector3(x y z));
+vec_type!(Vector4(x y z w));
 
-impl std::ops::Sub for Vec4f {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self::Output {
-        Self {
-            x: self.x - other.x,
-            y: self.y - other.y,
-            z: self.z - other.z,
-            w: self.w - other.w,
-        }
-    }
-}
-
-impl std::ops::SubAssign for Vec4f {
-    fn sub_assign(&mut self, other: Self) {
-        self.x -= other.x;
-        self.y -= other.y;
-        self.z -= other.z;
-        self.w -= other.w;
-    }
-}
-
-impl std::ops::Mul for Vec4f {
-    type Output = Self;
-
-    fn mul(self, other: Self) -> Self::Output {
-        Self {
-            x: self.x * other.x,
-            y: self.y * other.y,
-            z: self.z * other.z,
-            w: self.w * other.w,
-        }
-    }
-}
-
-impl std::ops::MulAssign for Vec4f {
-    fn mul_assign(&mut self, other: Self) {
-        self.x *= other.x;
-        self.y *= other.y;
-        self.z *= other.z;
-        self.w *= other.w;
-    }
-}
-
-impl std::ops::Div for Vec4f {
-    type Output = Self;
-
-    fn div(self, other: Self) -> Self::Output {
-        Self {
-            x: self.x / other.x,
-            y: self.y / other.y,
-            z: self.z / other.z,
-            w: self.w / other.w,
-        }
-    }
-}
-
-impl std::ops::DivAssign for Vec4f {
-    fn div_assign(&mut self, other: Self) {
-        self.x /= other.x;
-        self.y /= other.y;
-        self.z /= other.z;
-        self.w /= other.w;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn vec3f_eq() {
-        let vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        let vec2 = Vec3f::new(1.0, 0.0, -1.0);
-        assert_eq!(vec1, vec2);
+impl Vector3 {
+    pub fn positive_x() -> Self {
+        Self::new(1.0, 0.0, 0.0)
     }
 
-    #[test]
-    fn vec3f_ne() {
-        let vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        let vec2 = Vec3f::new(0.0, -1.0, 1.0);
-        assert_ne!(vec1, vec2);
+    pub fn negative_x() -> Self {
+        Self::new(-1.0, 0.0, 0.0)
     }
 
-    #[test]
-    fn vec3f_add() {
-        let vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        let vec2 = Vec3f::new(1.0, 0.0, -1.0);
-        assert_eq!(vec1 + vec2, Vec3f::new(2.0, 0.0, -2.0));
+    pub fn positive_y() -> Self {
+        Self::new(0.0, 1.0, 0.0)
     }
 
-    #[test]
-    fn vec3f_add_assign() {
-        let mut vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        vec1 += Vec3f::new(1.0, 0.0, -1.0);
-        assert_eq!(vec1, Vec3f::new(2.0, 0.0, -2.0));
+    pub fn negative_y() -> Self {
+        Self::new(0.0, -1.0, 0.0)
     }
 
-    #[test]
-    fn vec3f_sub() {
-        let vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        let vec2 = Vec3f::new(1.0, 0.0, -1.0);
-        assert_eq!(vec1 - vec2, Vec3f::new(0.0, 0.0, 0.0));
+    pub fn positive_z() -> Self {
+        Self::new(0.0, 0.0, 1.0)
     }
 
-    #[test]
-    fn vec3f_sub_assign() {
-        let mut vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        vec1 -= Vec3f::new(1.0, 0.0, -1.0);
-        assert_eq!(vec1, Vec3f::new(0.0, 0.0, 0.0));
-    }
-
-    #[test]
-    fn vec3f_mul() {
-        let vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        let vec2 = Vec3f::new(1.0, 0.0, -1.0);
-        assert_eq!(vec1 * vec2, Vec3f::new(1.0, 0.0, 1.0));
-    }
-
-    #[test]
-    fn vec3f_mul_assign() {
-        let mut vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        vec1 *= Vec3f::new(1.0, 0.0, -1.0);
-        assert_eq!(vec1, Vec3f::new(1.0, 0.0, 1.0));
-    }
-
-    #[test]
-    fn vec3f_div() {
-        let vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        let vec2 = Vec3f::new(1.0, 1.0, -1.0);
-        assert_eq!(vec1 / vec2, Vec3f::new(1.0, 0.0, 1.0));
-    }
-
-    #[test]
-    fn vec3f_div_assign() {
-        let mut vec1 = Vec3f::new(1.0, 0.0, -1.0);
-        vec1 /= Vec3f::new(1.0, 1.0, -1.0);
-        assert_eq!(vec1, Vec3f::new(1.0, 0.0, 1.0));
+    pub fn negative_z() -> Self {
+        Self::new(0.0, 0.0, -1.0)
     }
 }

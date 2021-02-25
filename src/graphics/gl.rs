@@ -291,15 +291,21 @@ pub fn get_uniform_location(
     }
 }
 
-/// Modifies the value of a uniform variable
+/// Modifies the value of a uniform variable of type `vec2`.
 #[inline]
-pub fn uniform3f(uniform: &UniformLocation, data: &Vec3f) {
+pub fn uniform2f(uniform: &UniformLocation, data: &Vector2) {
+    unsafe { raw_gl::Uniform2f(uniform.location, data.x, data.y) };
+}
+
+/// Modifies the value of a uniform variable of type `vec3`.
+#[inline]
+pub fn uniform3f(uniform: &UniformLocation, data: &Vector3) {
     unsafe { raw_gl::Uniform3f(uniform.location, data.x, data.y, data.z) };
 }
 
-/// Modifies the value of a uniform variable
+/// Modifies the value of a uniform variable of type `vec4`.
 #[inline]
-pub fn uniform4f(uniform: &UniformLocation, data: &Vec4f) {
+pub fn uniform4f(uniform: &UniformLocation, data: &Vector4) {
     unsafe { raw_gl::Uniform4f(uniform.location, data.x, data.y, data.z, data.w) };
 }
 

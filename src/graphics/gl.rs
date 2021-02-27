@@ -1,4 +1,4 @@
-use crate::maths::{Vector2, Vector3, Vector4};
+use crate::maths::*;
 use bitflags::bitflags;
 use raw_gl::types::*;
 
@@ -291,22 +291,40 @@ pub fn get_uniform_location(
     }
 }
 
-/// Modifies the value of a uniform variable of type `vec2`.
-#[inline]
-pub fn uniform2f(uniform: &UniformLocation, data: &Vector2) {
-    unsafe { raw_gl::Uniform2f(uniform.location, data.x, data.y) };
+pub trait UniformData {
+    fn upload(&self, uniform: &UniformLocation);
 }
 
-/// Modifies the value of a uniform variable of type `vec3`.
-#[inline]
-pub fn uniform3f(uniform: &UniformLocation, data: &Vector3) {
-    unsafe { raw_gl::Uniform3f(uniform.location, data.x, data.y, data.z) };
+impl UniformData for f32 {
+    fn upload(&self, uniform: &UniformLocation) {
+        unsafe { raw_gl::Uniform1f(uniform.location, *self) };
+    }
 }
 
-/// Modifies the value of a uniform variable of type `vec4`.
-#[inline]
-pub fn uniform4f(uniform: &UniformLocation, data: &Vector4) {
-    unsafe { raw_gl::Uniform4f(uniform.location, data.x, data.y, data.z, data.w) };
+impl UniformData for Vector2 {
+    fn upload(&self, uniform: &UniformLocation) {
+        unsafe { raw_gl::Uniform2f(uniform.location, self.x, self.y) };
+    }
+}
+
+impl UniformData for Vector3 {
+    fn upload(&self, uniform: &UniformLocation) {
+        unsafe { raw_gl::Uniform3f(uniform.location, self.x, self.y, self.z) };
+    }
+}
+
+impl UniformData for Vector4 {
+    fn upload(&self, uniform: &UniformLocation) {
+        unsafe { raw_gl::Uniform4f(uniform.location, self.x, self.y, self.z, self.w) };
+    }
+}
+
+impl UniformData for Matrix4 {
+    fn upload(&self, uniform: &UniformLocation) {
+        unsafe {
+            raw_gl::UniformMatrix4fv(uniform.location, 1, raw_gl::FALSE, &self.0 as *const f32)
+        };
+    }
 }
 
 pub struct VertexArrayId {

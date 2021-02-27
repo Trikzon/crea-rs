@@ -1,5 +1,5 @@
 use crate::graphics::gl;
-
+use std::collections::HashMap;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -8,6 +8,8 @@ pub enum ShaderError {
     InvalidTypeHeader(String),
     #[error("missing #type annotation in multi-shader")]
     MissingTypeHeader,
+    #[error("attempted to upload to an undefined uniform")]
+    UndefinedUniform,
     #[error("encountered a gl error")]
     GLError(#[from] gl::GLError),
 }
@@ -19,6 +21,7 @@ pub enum ShaderSource {
 
 pub struct ShaderProgram {
     program_id: gl::ProgramId,
+    uniform_locations: HashMap<String, gl::UniformLocation>,
 }
 
 impl ShaderProgram {
@@ -55,7 +58,10 @@ impl ShaderProgram {
             gl::delete_shader(&shader_id);
         }
 
-        Ok(ShaderProgram { program_id })
+        Ok(ShaderProgram {
+            program_id,
+            uniform_locations: HashMap::new(),
+        })
     }
 
     pub fn from_multi_shader(multi_shader: &str) -> Result<Self, ShaderError> {
@@ -90,6 +96,29 @@ impl ShaderProgram {
     #[inline]
     pub fn unbind(&self) {
         gl::unbind_program();
+    }
+
+    pub fn define_uniform(&mut self, name: &str) -> Result<(), ShaderError> {
+        match gl::get_uniform_location(&self.program_id, name) {
+            Ok(location) => {
+                self.uniform_locations.insert(name.to_owned(), location);
+                Ok(())
+            }
+            Err(e) => Err(ShaderError::GLError(e)),
+        }
+    }
+
+    pub fn upload_uniform(
+        &self,
+        name: &str,
+        data: &impl gl::UniformData,
+    ) -> Result<(), ShaderError> {
+        if let Some(location) = self.uniform_locations.get(name) {
+            data.upload(location);
+            Ok(())
+        } else {
+            Err(ShaderError::UndefinedUniform)
+        }
     }
 }
 

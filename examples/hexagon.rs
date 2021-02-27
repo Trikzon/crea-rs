@@ -1,4 +1,5 @@
 use crean::graphics::{Buffer, EventLoop, ShaderProgram, VertexArray, Window};
+use crean::maths::{Matrix4, Vector, Vector3};
 
 const SHADER_SOURCE: &str = include_str!("assets/hexagon.glsl");
 
@@ -58,7 +59,22 @@ fn main() {
     vertex_array1.put_array_buffer_ref(1, &colors_buffer);
 
     // Create a shader program.
-    let shader_program = ShaderProgram::from_multi_shader(SHADER_SOURCE).unwrap();
+    let mut shader_program = ShaderProgram::from_multi_shader(SHADER_SOURCE).unwrap();
+    shader_program.bind();
+    shader_program.define_uniform("uProjection").unwrap();
+    // shader_program.define_uniform("uView").unwrap();
+    shader_program.define_uniform("uTransformation").unwrap();
+
+    let (width, height) = window.size();
+    let projection_matrix = Matrix4::perspective(70.0, width, height, 0.0, 1000.0);
+    // let projection_matrix = Matrix4::orthographic(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    shader_program
+        .upload_uniform("uProjection", &projection_matrix)
+        .unwrap();
+    shader_program.unbind();
+
+    let mut rotation = Vector3::zero();
+    let mut rotation1 = Vector3::zero();
 
     // Game loop
     while !window.should_close() {
@@ -72,6 +88,15 @@ fn main() {
         shader_program.bind();
         vertex_array.bind();
         vertex_array.enable_attrib_arrays();
+
+        rotation += Vector3::new(0.0, 0.0, 1.0);
+        rotation1 += Vector3::new(0.0, 0.0, -1.0);
+
+        let transformation_matrix =
+            Matrix4::transformation(&Vector3::zero(), &rotation, &Vector3::new(1.0, 1.0, 1.0));
+        shader_program
+            .upload_uniform("uTransformation", &transformation_matrix)
+            .unwrap();
 
         // Render
         unsafe {
@@ -89,6 +114,12 @@ fn main() {
 
         vertex_array1.bind();
         vertex_array1.enable_attrib_arrays();
+
+        let transformation_matrix =
+            Matrix4::transformation(&Vector3::zero(), &rotation1, &Vector3::new(1.0, 1.0, 1.0));
+        shader_program
+            .upload_uniform("uTransformation", &transformation_matrix)
+            .unwrap();
 
         unsafe {
             raw_gl::DrawElements(

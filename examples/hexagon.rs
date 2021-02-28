@@ -90,10 +90,12 @@ fn main() {
         vertex_array.enable_attrib_arrays();
 
         rotation += Vector3::new(0.0, 0.0, 1.0);
-        rotation1 += Vector3::new(0.0, 0.0, -1.0);
 
-        let transformation_matrix =
-            Matrix4::transformation(&Vector3::zero(), &rotation, &Vector3::new(1.0, 1.0, 1.0));
+        let transformation_matrix = Matrix4::transformation(
+            &Vector3::new(1.0, 0.0, 0.0),
+            &rotation,
+            &Vector3::new(0.5, 0.5, 0.5),
+        );
         shader_program
             .upload_uniform("uTransformation", &transformation_matrix)
             .unwrap();
@@ -116,7 +118,7 @@ fn main() {
         vertex_array1.enable_attrib_arrays();
 
         let transformation_matrix =
-            Matrix4::transformation(&Vector3::zero(), &rotation1, &Vector3::new(1.0, 1.0, 1.0));
+            Matrix4::transformation(&Vector3::zero(), &-rotation, &Vector3::new(1.0, 1.0, 1.0));
         shader_program
             .upload_uniform("uTransformation", &transformation_matrix)
             .unwrap();

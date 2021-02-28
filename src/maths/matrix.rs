@@ -55,47 +55,45 @@ impl Matrix4 {
     }
 
     pub fn transformation(translation: &Vector3, rotation: &Vector3, scale: &Vector3) -> Self {
-        let matrix = Self::identity();
+        let scale = Self::scale(scale);
+        let rotation = Self::rotation_xyz(rotation.into());
+        let translation = Self::translation(translation);
 
-        let matrix = matrix.translated(translation);
-        let matrix = matrix.rotated_xyz(rotation.into());
-        let matrix = matrix.scaled(scale);
-
-        matrix
+        scale * rotation * translation
     }
 
-    pub fn translated(&self, translation: &Vector3) -> Self {
-        let mut matrix = self.clone();
+    pub fn translation(translation: &Vector3) -> Self {
+        let mut matrix = Self::identity();
 
         matrix.set_value(0, 3, matrix.get_value(0, 3) + translation.x);
-        matrix.set_value(1, 3, matrix.get_value(1, 3) + translation.x);
-        matrix.set_value(2, 3, matrix.get_value(2, 3) + translation.x);
+        matrix.set_value(1, 3, matrix.get_value(1, 3) + translation.y);
+        matrix.set_value(2, 3, matrix.get_value(2, 3) + translation.z);
 
         matrix
     }
 
-    pub fn rotated_x(&self, angle: f32) -> Self {
-        self.rotated(angle, &Vector3::new(1.0, 0.0, 0.0))
+    pub fn rotation_x(angle: f32) -> Self {
+        Self::rotation(angle, &Vector3::new(1.0, 0.0, 0.0))
     }
 
-    pub fn rotated_y(&self, angle: f32) -> Self {
-        self.rotated(angle, &Vector3::new(0.0, 1.0, 0.0))
+    pub fn rotation_y(angle: f32) -> Self {
+        Self::rotation(angle, &Vector3::new(0.0, 1.0, 0.0))
     }
 
-    pub fn rotated_z(&self, angle: f32) -> Self {
-        self.rotated(angle, &Vector3::new(0.0, 0.0, 1.0))
+    pub fn rotation_z(angle: f32) -> Self {
+        Self::rotation(angle, &Vector3::new(0.0, 0.0, 1.0))
     }
 
-    pub fn rotated_xyz(&self, angles: (f32, f32, f32)) -> Self {
-        let matrix = self.rotated_x(angles.0);
-        let matrix = matrix.rotated_y(angles.1);
-        let matrix = matrix.rotated_z(angles.2);
+    pub fn rotation_xyz(angles: (f32, f32, f32)) -> Self {
+        let x = Self::rotation_x(angles.0);
+        let y = Self::rotation_y(angles.1);
+        let z = Self::rotation_z(angles.2);
 
-        matrix
+        x * y * z
     }
 
-    pub fn rotated(&self, angle: f32, axis: &Vector3) -> Self {
-        let mut matrix = self.clone();
+    pub fn rotation(angle: f32, axis: &Vector3) -> Self {
+        let mut matrix = Self::identity();
 
         let r = angle.to_radians();
         let c = r.cos();
@@ -119,8 +117,8 @@ impl Matrix4 {
         matrix
     }
 
-    pub fn scaled(&self, scale: &Vector3) -> Self {
-        let mut matrix = self.clone();
+    pub fn scale(scale: &Vector3) -> Self {
+        let mut matrix = Self::identity();
 
         matrix.set_value(0, 0, matrix.get_value(0, 0) * scale.x);
         matrix.set_value(1, 1, matrix.get_value(1, 1) * scale.y);
